@@ -1,0 +1,38 @@
+#!/usr/bin/python
+import MySQLdb
+import secrets
+import sys
+
+def main():
+
+	if len(sys.argv) < 4:
+		print "Provide a name, a human readable name, and the id of the issuer the program belongs to. Eg. ./create_program myprogram \"My Program\" 1"
+		exit(-1)
+
+	program_name = sys.argv[1]
+	program_readable = sys.argv[2]
+	program_issuer = sys.argv[3]
+	db = MySQLdb.connect(secrets.DATABASE_HOST, secrets.DATABASE_USER, secrets.DATABASE_PASSWORD, secrets.DATABASE)
+	cursor = db.cursor()
+	
+	check_program = """SELECT * FROM programs WHERE slug=\"%s\"""" % program_name
+	
+	cursor.execute(check_program)
+	data = cursor.fetchone()
+
+	if data:
+		print "A program with name %s already exists." % program_name
+		exit(-1)
+
+	sql = """INSERT INTO programs(slug, name, url, issuerId) VALUES("%s", "%s", "%s", "%s")""" % (program_name, program_readable, secrets.API_HOST, program_issuer)
+	
+	try:
+		cursor.execute(sql)
+		db.commit()
+	except:
+		db.rollback()
+
+	db.close()
+
+if __name__ == "__main__":
+	main()

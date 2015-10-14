@@ -1,0 +1,37 @@
+#!/usr/bin/python
+import MySQLdb
+import secrets
+import sys
+
+def main():
+
+	if len(sys.argv) < 3:
+		print "Provide a name and human readable name for the system. Eg. ./create_system.py mysystem \"My System\""
+		exit(-1)
+
+	sys_name = sys.argv[1]
+	sys_readable = sys.argv[2]
+	db = MySQLdb.connect(secrets.DATABASE_HOST, secrets.DATABASE_USER, secrets.DATABASE_PASSWORD, secrets.DATABASE)
+	cursor = db.cursor()
+	
+	check_system = """SELECT * FROM systems WHERE slug=\"%s\"""" % sys_name 
+	
+	cursor.execute(check_system)
+	data = cursor.fetchone()
+
+	if data:
+		print "A system with name %s already exists." % sys_name
+		exit(-1)
+
+	sql = """INSERT INTO systems(slug, name, url) VALUES("%s", "%s", "%s")""" % (sys_name, sys_readable, secrets.API_HOST)
+	
+	try:
+		cursor.execute(sql)
+		db.commit()
+	except:
+		db.rollback()
+
+	db.close()
+
+if __name__ == "__main__":
+	main()

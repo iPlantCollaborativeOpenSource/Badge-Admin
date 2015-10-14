@@ -1,0 +1,38 @@
+#!/usr/bin/python
+import MySQLdb
+import secrets
+import sys
+
+def main():
+
+	if len(sys.argv) < 4:
+		print "Provide a name, a human readable name, and the id of the system the issuer belongs to. Eg. ./create_issuer myissuer \"My Issuer\" 1"
+		exit(-1)
+
+	issuer_name = sys.argv[1]
+	issuer_readable = sys.argv[2]
+	issuer_system = sys.argv[3]
+	db = MySQLdb.connect(secrets.DATABASE_HOST, secrets.DATABASE_USER, secrets.DATABASE_PASSWORD, secrets.DATABASE)
+	cursor = db.cursor()
+	
+	check_issuer = """SELECT * FROM issuers WHERE slug=\"%s\"""" % issuer_name
+	
+	cursor.execute(check_issuer)
+	data = cursor.fetchone()
+
+	if data:
+		print "An issuer with name %s already exists." % issuer_name
+		exit(-1)
+
+	sql = """INSERT INTO issuers(slug, name, url, systemId) VALUES("%s", "%s", "%s", "%s")""" % (issuer_name, issuer_readable, secrets.API_HOST, issuer_system)
+	
+	try:
+		cursor.execute(sql)
+		db.commit()
+	except:
+		db.rollback()
+
+	db.close()
+
+if __name__ == "__main__":
+	main()
